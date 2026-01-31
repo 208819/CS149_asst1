@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <getopt.h>
-
+#include <cstring>
 #include "CycleTimer.h"
 
 extern void mandelbrotSerial(
@@ -11,7 +11,14 @@ extern void mandelbrotSerial(
     int maxIterations,
     int output[]);
 
-extern void mandelbrotThread(
+extern void mandelbrotThreadStatic(
+    int numThreads,
+    float x0, float y0, float x1, float y1,
+    int width, int height,
+    int maxIterations,
+    int output[]);
+
+extern void mandelbrotThreadChunk(
     int numThreads,
     float x0, float y0, float x1, float y1,
     int width, int height,
@@ -140,20 +147,37 @@ int main(int argc, char** argv) {
     writePPMImage(output_serial, width, height, "mandelbrot-serial.ppm", maxIterations);
 
     //
-    // Run the threaded version
+    // Run the threaded versions
     //
 
-    double minThread = 1e30;
+    // Run static version
+    double minThreadStatic = 1e30;
     for (int i = 0; i < 5; ++i) {
       memset(output_thread, 0, width * height * sizeof(int));
         double startTime = CycleTimer::currentSeconds();
-        mandelbrotThread(numThreads, x0, y0, x1, y1, width, height, maxIterations, output_thread);
+        mandelbrotThreadStatic(numThreads, x0, y0, x1, y1, width, height, maxIterations, output_thread);
         double endTime = CycleTimer::currentSeconds();
-        minThread = std::min(minThread, endTime - startTime);
+        minThreadStatic = std::min(minThreadStatic, endTime - startTime);
     }
 
-    printf("[mandelbrot thread]:\t\t[%.3f] ms\n", minThread * 1000);
-    writePPMImage(output_thread, width, height, "mandelbrot-thread.ppm", maxIterations);
+    printf("[mandelbrot thread static]:\t\t[%.3f] ms\n", minThreadStatic * 1000);
+    writePPMImage(output_thread, width, height, "mandelbrot-thread-static.ppm", maxIterations);
+
+    // Run chunk version
+    double minThreadChunk = 1e30;
+    for (int i = 0; i < 5; ++i) {
+      memset(output_thread, 0, width * height * sizeof(int));
+        double startTime = CycleTimer::currentSeconds();
+        mandelbrotThreadChunk(numThreads, x0, y0, x1, y1, width, height, maxIterations, output_thread);
+        double endTime = CycleTimer::currentSeconds();
+        minThreadChunk = std::min(minThreadChunk, endTime - startTime);
+    }
+
+    printf("[mandelbrot thread chunk]:\t\t[%.3f] ms\n", minThreadChunk * 1000);
+    writePPMImage(output_thread, width, height, "mandelbrot-thread-chunk.ppm", maxIterations);
+
+    // Compare speedups
+    printf("\t\t\t\tStatic speedup: %.2fx, Chunk speedup: %.2fx\n", minSerial/minThreadStatic, minSerial/minThreadChunk);
 
     if (! verifyResult (output_serial, output_thread, width, height)) {
         printf ("Error : Output from threads does not match serial output\n");
@@ -163,9 +187,6 @@ int main(int argc, char** argv) {
 
         return 1;
     }
-
-    // compute speedup
-    printf("\t\t\t\t(%.2fx speedup from %d threads)\n", minSerial/minThread, numThreads);
 
     delete[] output_serial;
     delete[] output_thread;

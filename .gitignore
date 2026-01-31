@@ -1,0 +1,8 @@
+prog1_mandelbrot_threads/bin/mandelbrot
+prog1_mandelbrot_threads/bin/mandelbrot-serial.ppm
+prog1_mandelbrot_threads/bin/mandelbrot-thread-chunk.ppm
+prog1_mandelbrot_threads/bin/mandelbrot-thread-static.ppm
+prog1_mandelbrot_threads/objs/main.o
+prog1_mandelbrot_threads/objs/mandelbrotSerial.o
+prog1_mandelbrot_threads/objs/mandelbrotThread.o
+prog1_mandelbrot_threads/objs/ppm.o
