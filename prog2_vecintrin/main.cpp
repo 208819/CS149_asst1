@@ -223,16 +223,21 @@ void clampedExpSerial(float* values, int* exponents, float* output, int N) {
   for (int i=0; i<N; i++) {
     float x = values[i];
     int y = exponents[i];
-    if (y == 0) {
+    if (y == 0) 
+    {
       output[i] = 1.f;
-    } else {
+    } 
+    else 
+    {
       float result = x;
       int count = y - 1;
-      while (count > 0) {
+      while (count > 0) 
+      {
         result *= x;
         count--;
       }
-      if (result > 9.999999f) {
+      if (result > 9.999999f) 
+      {
         result = 9.999999f;
       }
       output[i] = result;
@@ -249,6 +254,43 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
   // Your solution should work for any value of
   // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
   //
+  __cs149_vec_float x;
+  __cs149_vec_int y;
+  __cs149_vec_int inter;
+  __cs149_vec_float result;
+  __cs149_vec_int zero = _cs149_vset_int(0);
+  __cs149_vec_float max_value = _cs149_vset_float( 9.999999f);
+  __cs149_mask use_mask,eq_mask,not_eq_mask,max_value_mask;
+
+  for(int i=0;i<N;i+=VECTOR_WIDTH)
+  {
+    
+    int remain_len=min(VECTOR_WIDTH,N-i);
+    use_mask=_cs149_init_ones(remain_len);
+    _cs149_vload_float(x,values+i,use_mask);
+    _cs149_vload_int(y,exponents+i,use_mask);
+    _cs149_vset_float(result,1.f,use_mask);
+    
+    _cs149_veq_int(eq_mask,zero,y,use_mask);
+    not_eq_mask=_cs149_mask_not(eq_mask);
+    not_eq_mask=_cs149_mask_and(not_eq_mask,use_mask);
+
+
+    while(_cs149_cntbits(not_eq_mask)>0)
+    {
+      _cs149_vmult_float(result,result,x,not_eq_mask);
+      _cs149_vset_int(inter,1,not_eq_mask);
+      _cs149_vsub_int(y,y,inter,not_eq_mask);
+
+      _cs149_veq_int(eq_mask,zero,y,use_mask);
+      not_eq_mask=_cs149_mask_not(eq_mask);
+      not_eq_mask=_cs149_mask_and(not_eq_mask,use_mask);
+    }
+    _cs149_vgt_float(max_value_mask,result,max_value,use_mask);
+	_cs149_vset_float(result, 9.999999f,max_value_mask);
+    _cs149_vstore_float(output+i, result,use_mask);
+
+   }
   
 }
 

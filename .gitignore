@@ -6,3 +6,6 @@ prog1_mandelbrot_threads/objs/main.o
 prog1_mandelbrot_threads/objs/mandelbrotSerial.o
 prog1_mandelbrot_threads/objs/mandelbrotThread.o
 prog1_mandelbrot_threads/objs/ppm.o
+prog2_vecintrin/myexp
+prog2_vecintrin/logger.o
+prog2_vecintrin/CS149intrin.o
