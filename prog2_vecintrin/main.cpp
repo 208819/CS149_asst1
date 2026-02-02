@@ -307,16 +307,50 @@ float arraySumSerial(float* values, int N) {
 // returns the sum of all elements in values
 // You can assume N is a multiple of VECTOR_WIDTH
 // You can assume VECTOR_WIDTH is a power of 2
-float arraySumVector(float* values, int N) {
+float arraySumVector(float* values, int N) 
+{
   
   //
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
+	__cs149_mask use_mask;
+	__cs149_vec_float sum=_cs149_vset_float(0.f);
+	__cs149_vec_float x,result,tmp;
+
   
-  for (int i=0; i<N; i+=VECTOR_WIDTH) {
+	for (int i=0; i<N; i+=VECTOR_WIDTH) 
+	{
+		use_mask=_cs149_init_ones(min(N-i,VECTOR_WIDTH));
+		_cs149_vload_float(x,values+i,use_mask);
+		_cs149_vadd_float(sum,sum,x,use_mask);
+	}
 
-  }
+	for(int i=VECTOR_WIDTH; i>1; i>>=1)
+	{
+		_cs149_hadd_float(tmp,sum);
+		_cs149_interleave_float(sum,tmp);//最后一次是为了规范写法，运算无差别
+	}
+	
+	return sum.value[0];
+ }
 
-  return 0.0;
-}
+// 0    42315713
 
+// width=2
+//13 13
+//26 26
+//26 26
+// width=4
+//9 9 4 4
+//18 18 8 8
+//18 8 18 8
+//26 26 26 26
+//26 26 26 26
+// width=8
+//4 2 3 1 5 7 1 3
+//6 6 4 4 12 12 4 4
+//6 4 12 4 6 4 12 4
+//10 10 16 16 10 10 16 16
+//10 16 10 16 10 16 10 16
+//26 26 26 26 26 26 26 26
+//26 26 26 26 26 26 26 26
